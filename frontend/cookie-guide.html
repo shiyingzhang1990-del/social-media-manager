@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书 Cookie 提取指南</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f6fa; color: #1a1a2e; padding: 40px 20px;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 28px; margin-bottom: 8px; text-align: center; }
+  .subtitle { text-align: center; color: #7e8299; margin-bottom: 36px; font-size: 15px; }
+  .step {
+    background: #fff; border-radius: 12px; padding: 28px 32px;
+    margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #eef0f4; position: relative;
+  }
+  .step-num {
+    position: absolute; top: -12px; left: -12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #ff2442; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(255,36,66,0.3);
+  }
+  .step h2 { font-size: 18px; margin-bottom: 12px; }
+  .step p, .step li { font-size: 14px; line-height: 1.7; color: #3f4254; }
+  .step ul { padding-left: 20px; margin: 8px 0; }
+  .highlight {
+    background: #fef6f0; border: 1px solid #ffedd5;
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+    font-size: 13px; line-height: 1.6;
+  }
+  .code-block {
+    background: #1e1e2e; color: #cdd6f4; border-radius: 8px;
+    padding: 14px 18px; font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 13px; line-height: 1.6; overflow-x: auto; margin: 10px 0;
+  }
+  .code-block .comment { color: #6c7086; }
+  .code-block .keyword { color: #89b4fa; }
+  .code-block .string { color: #a6e3a1; }
+  .screenshot-mock {
+    background: #f0f4f8; border: 2px dashed #cbd5e1;
+    border-radius: 8px; padding: 20px; margin: 12px 0;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .screenshot-mock .browser-bar {
+    background: #e2e8f0; border-radius: 6px 6px 0 0;
+    padding: 8px 12px; display: flex; gap: 6px;
+    margin: -20px -20px 12px -20px;
+  }
+  .screenshot-mock .browser-bar .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .screenshot-mock .url-bar {
+    background: #fff; border: 1px solid #cbd5e1;
+    border-radius: 4px; padding: 4px 10px; font-size: 12px;
+    flex: 1; text-align: center; color: #475569;
+  }
+  .screenshot-mock .devtools-panel {
+    background: #1e293b; color: #e2e8f0; border-radius: 4px;
+    padding: 16px; text-align: left; font-family: monospace; font-size: 12px;
+  }
+  .screenshot-mock .devtools-panel .tab-bar {
+    display: flex; gap: 4px; margin-bottom: 12px;
+    border-bottom: 1px solid #334155; padding-bottom: 6px;
+  }
+  .screenshot-mock .devtools-panel .tab {
+    padding: 3px 10px; border-radius: 3px; font-size: 11px;
+  }
+  .screenshot-mock .devtools-panel .tab.active { background: #334155; color: #fff; }
+  .screenshot-mock .devtools-panel .cookie-table {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  }
+  .screenshot-mock .devtools-panel .cookie-table .header {
+    color: #94a3b8; padding: 4px 6px; font-weight: bold;
+  }
+  .screenshot-mock .devtools-panel .cookie-table .cell {
+    padding: 4px 6px; border-bottom: 1px solid #334155;
+  }
+  .arrow-step { text-align: center; font-size: 28px; color: #ff2442; margin: -8px 0 4px; }
+  .btn-primary {
+    display: inline-block; background: #ff2442; color: #fff;
+    padding: 10px 24px; border-radius: 8px; text-decoration: none;
+    font-weight: 600; font-size: 14px; margin-top: 8px;
+  }
+  .btn-primary:hover { background: #e01e3a; }
+  .result-box {
+    background: #f0fff4; border: 1px solid #bbf7d0;
+    border-radius: 8px; padding: 16px; margin: 12px 0;
+  }
+  .result-box strong { color: #16a34a; font-size: 15px; }
+  .footer { text-align: center; color: #94a3b8; font-size: 13px; margin-top: 40px; }
+  .panel-sidebar {
+    display: flex; gap: 12px; margin: 12px 0;
+  }
+  .panel-sidebar .sidebar-items {
+    width: 40%; background: #0f172a; border-radius: 6px;
+    padding: 10px; font-family: monospace; font-size: 11px;
+  }
+  .panel-sidebar .sidebar-items .item {
+    padding: 4px 8px; margin: 2px 0; border-radius: 3px;
+  }
+  .panel-sidebar .sidebar-items .item.highlighted {
+    background: #1e3a5f; color: #93c5fd;
+  }
+  .panel-sidebar .sidebar-items .item .arrow { color: #fbbf24; margin-right: 4px; }
+  .arrow-indicator {
+    display: inline-block;
+    width: 24px; height: 24px; line-height: 24px; text-align: center;
+    background: #ff2442; color: #fff; border-radius: 50%;
+    font-size: 14px; font-weight: bold; margin-right: 8px;
+  }
+  @media (max-width: 600px) {
+    .step { padding: 20px 18px; }
+    .step-num { width: 28px; height: 28px; font-size: 13px; top: -10px; left: -10px; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🍠 小红书 Cookie 提取指南</h1>
+<p class="subtitle">5步拿到 Cookie JSON，填入系统即可管理你的小红书账号</p>
+
+<!-- Step 1 -->
+<div class="step">
+  <div class="step-num">1</div>
+  <h2>在浏览器登录小红书</h2>
+  <p>用 <strong>Chrome 或 Edge</strong> 打开小红书官网并登录你要管理的账号。</p>
+  <div class="highlight">
+    <strong>务必确保：</strong>当前浏览器已经登录了你的小红书账号。<br>
+    如果还没登录，先去 <a href="https://www.xiaohongshu.com" target="_blank">xiaohongshu.com</a> 完成登录。
+  </div>
+  <div class="screenshot-mock">
+    <div class="browser-bar">
+      <span class="dot" style="background:#ef4444"></span>
+      <span class="dot" style="background:#f59e0b"></span>
+      <span class="dot" style="background:#22c55e"></span>
+      <span class="url-bar">https://www.xiaohongshu.com</span>
+    </div>
+    <div style="font-size:24px;padding:8px 0">🏠 小红书 · 首页</div>
+    <div style="font-size:13px;color:#64748b">在地址栏确认是 xiaohongshu.com，且右上角显示你的头像（已登录）</div>
+  </div>
+</div>
+
+<!-- Arrow -->
+<div class="arrow-step">↓</div>
+
+<!-- Step 2 -->
+<div class="step">
+  <div class="step-num">2</div>
+  <h2>打开开发者工具</h2>
+  <p>按下键盘上的 <strong>F12</strong> 键（或 <code>Ctrl+Shift+I</code> / <code>Cmd+Option+I</code>）。</p>
+  <p>浏览器右侧或底部会打开一个面板，这就是开发者工具。</p>
+  <div class="highlight">
+    💡 <strong>Mac 用户：</strong> 如果 F12 没反应，按 <code>Command + Option + I</code><br>
+    💡 <strong>笔记本用户：</strong> 可能需要同时按 <code>Fn + F12</code>
+  </div>
+  <div class="screenshot-mock">
+    <div class="browser-bar">
+      <span class="dot" style="background:#22c55e"></span>
+      <span class="url-bar" style="background:#f8fafc">https://www.xiaohongshu.com</span>
+    </div>
+    <div style="height:4px;background:#e2e8f0;margin-bottom:8px"></div>
+    <div class="devtools-panel">
+      <div class="tab-bar">
+        <span class="tab">Elements</span>
+        <span class="tab">Console</span>
+        <span class="tab active">Application</span>
+        <span class="tab">Network</span>
+        <span class="tab">Sources</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8">按 F12 后出现的 DevTools 面板</div>
+    </div>
+  </div>
+</div>
+
+<!-- Arrow -->
+<div class="arrow-step">↓</div>
+
+<!-- Step 3 -->
+<div class="step">
+  <div class="step-num">3</div>
+  <h2>切换到「Application」标签 → 找到 Cookies</h2>
+  <p>在开发者工具顶部标签栏，点击 <strong>「Application」</strong>（应用标签）。</p>
+  <p>在左侧菜单栏找到 <strong>「Storage」→「Cookies」</strong>，点击展开，然后点击 <strong>「https://www.xiaohongshu.com」</strong>。</p>
+  <div class="screenshot-mock">
+    <div class="devtools-panel" style="text-align:left">
+      <div class="panel-sidebar">
+        <div class="sidebar-items">
+          <div class="item">▶ Frames</div>
+          <div class="item" style="margin-top:8px;font-weight:bold;color:#94a3b8;font-size:10px">STORAGE</div>
+          <div class="item">▶ Local Storage</div>
+          <div class="item">▶ Session Storage</div>
+          <div class="item highlighted"><span class="arrow">▶</span> Cookies</div>
+          <div class="item" style="padding-left:20px">https://www.xiaohongshu.com</div>
+          <div class="item" style="padding-left:20px">https://fe.xiaohongshu.com</div>
+        </div>
+        <div style="flex:1;font-size:11px;padding:4px">
+          <div style="color:#94a3b8;margin-bottom:6px">Cookie 列表（示例）</div>
+          <div style="display:grid;grid-template-columns:80px 1fr;gap:2px">
+            <span style="color:#fbbf24">a1</span><span>= xxxxxxxxxx</span>
+            <span style="color:#fbbf24">webId</span><span>= xxxxxxxxxx</span>
+            <span style="color:#fbbf24">web_session</span><span>= xxxxxxxxxx</span>
+            <span style="color:#fbbf24">x-user-id</span><span>= 669c4ab4...</span>
+            <span style="color:#94a3b8">...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="highlight">
+    ✅ <strong>确认：</strong>右侧应该能看到一列 key/value 形式的 Cookie 数据，包含 a1、web_session、x-user-id 等字段。
+  </div>
+</div>
+
+<!-- Arrow -->
+<div class="arrow-step">↓</div>
+
+<!-- Step 4 -->
+<div class="step">
+  <div class="step-num">4</div>
+  <h2>一键导出 Cookie 为 JSON</h2>
+  <p>在 <strong>Console（控制台）</strong> 标签页里运行一行代码，直接把 Cookie 转成 JSON 复制到剪贴板。</p>
+
+  <p style="margin-top:10px"><strong>方法 A（推荐）：在 Console 里粘贴以下代码</strong></p>
+  <div class="code-block">
+    <span class="comment">// 粘贴后按回车，自动复制 JSON 格式的 Cookie 到剪贴板</span><br>
+    <span style="color:#89b4fa">copy</span>(<span style="color:#89b4fa">JSON</span>.stringify(<br>
+    &nbsp;&nbsp;<span style="color:#89b4fa">Object</span>.fromEntries(<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a6e3a1">document.cookie</span>.split(<span style="color:#a6e3a1">'; '</span>).map(<span style="color:#89b4fa">c</span> => c.split(<span style="color:#a6e3a1">'='</span>))<br>
+    &nbsp;&nbsp;)<br>
+    )) <span class="comment">// 执行后直接去粘贴即可</span>
+  </div>
+  <div class="result-box">
+    <strong>✓ 运行后</strong> · 什么都不会显示，但已经复制到剪贴板了。<br>
+    打开任意文本编辑器按 <strong>Cmd+V</strong> 检查，应该看到类似这样的内容：
+  </div>
+  <div class="code-block">
+    {<span style="color:#a6e3a1">"a1"</span>: <span style="color:#a6e3a1">"187#####"</span>, <span style="color:#a6e3a1">"webId"</span>: <span style="color:#a6e3a1">"xxxx"</span>, <span style="color:#a6e3a1">"web_session"</span>: <span style="color:#a6e3a1">"xxxx"</span>, ...}
+  </div>
+
+  <p style="margin-top:14px"><strong>方法 B：在 Application 面板右键导出</strong></p>
+  <div class="screenshot-mock" style="padding:12px">
+    <div class="devtools-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span>Cookies · https://www.xiaohongshu.com</span>
+        <span style="background:#334155;padding:3px 10px;border-radius:4px;font-size:11px">右键点击 → 导出</span>
+      </div>
+      <div class="cookie-table">
+        <div class="header">Name</div><div class="header">Value</div>
+        <div class="cell">a1</div><div class="cell">1871a7a6d...</div>
+        <div class="cell">web_session</div><div class="cell">030037a4...</div>
+        <div class="cell">x-user-id</div><div class="cell">669c4ab4...</div>
+      </div>
+    </div>
+  </div>
+  <div class="highlight">
+    💡 <strong>方法 B 步骤：</strong>在 Cookie 列表的任意一行 <strong>右键 → Export → 作为 JSON</strong>（或类似选项），然后去粘贴到系统里。
+  </div>
+</div>
+
+<!-- Arrow -->
+<div class="arrow-step">↓</div>
+
+<!-- Step 5 -->
+<div class="step">
+  <div class="step-num">5</div>
+  <h2>粘贴到系统 + 填用户 ID</h2>
+  <p>回到 <strong>社交媒体管理平台</strong>（http://127.0.0.1:8765）→ 账号管理 → 添加账号 → 选小红书。</p>
+  <div class="code-block" style="background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b">
+    📋 <strong>需要填写的两个字段：</strong><br><br>
+    ① <strong>小红书店 Cookies (JSON)</strong><br>
+    &nbsp;&nbsp;← 粘贴刚才复制的那段 JSON（以 <span style="color:#2563eb">{</span> 开头，<span style="color:#2563eb">}</span> 结尾）<br><br>
+    ② <strong>用户 ID</strong><br>
+    &nbsp;&nbsp;← 粘贴 <span style="background:#fef6f0;padding:2px 6px;border-radius:3px;font-family:monospace">669c4ab40000000024022bcd</span>
+  </div>
+  <div class="highlight">
+    <strong>你的用户 ID：</strong>在你之前发的链接里：<br>
+    <code>https://www.xiaohongshu.com/user/profile/<strong style="color:#ff2442;font-size:16px">669c4ab40000000024022bcd</strong></code>
+  </div>
+  <div class="result-box" style="text-align:center">
+    <strong>✅ 填好后点击「确认添加」，系统自动验证，完成！</strong><br>
+    <span style="font-size:13px;color:#64748b">验证通过后账号出现在列表里，就可以用它发布内容了</span>
+  </div>
+</div>
+
+<!-- Bonus Tip -->
+<div class="step" style="background:#fef9ef;border-color:#fde68a">
+  <h2>💡 小提示</h2>
+  <ul>
+    <li>Cookie 有时效性，如果账号状态变成"异常"，重新拿一次 Cookie 更新即可</li>
+    <li>每个账号需要单独拿它自己的 Cookie（登录哪个账号，拿到的就是哪个的）</li>
+    <li>最好用 Chrome 或 Edge 浏览器操作，Safari 开发者工具界面不太一样</li>
+    <li>拿 Cookie 时不要关闭小红书页面，保持登录状态</li>
+  </ul>
+</div>
+
+<div style="text-align:center;margin-top:32px">
+  <a href="/" class="btn-primary">← 返回管理平台</a>
+</div>
+
+<div class="footer">
+  Social Media Manager · 小红书 Cookie 提取指南
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookie 获取指南 - SMM</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6fa;color:#1a1a2e;padding:30px 20px}
+.container{max-width:720px;margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}
+.subtitle{color:#7e8299;margin-bottom:24px;font-size:14px}
+.card{background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:16px;border:1px solid #eef0f4;box-shadow:0 2px 12px rgba(0,0,0,0.04)}
+.card h2{font-size:17px;margin-bottom:10px}
+.card p,.card li{font-size:14px;line-height:1.7;color:#3f4254}
+.card ol{padding-left:20px;margin:8px 0}
+.step-box{display:flex;gap:14px;margin:14px 0;padding:14px;background:#fafbfc;border-radius:8px;border:1px solid #eef0f4}
+.step-num{width:28px;height:28px;min-width:28px;border-radius:50%;background:#ff2442;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.step-content{flex:1}
+.step-content strong{display:block;margin-bottom:3px;font-size:14px}
+.step-content p,.step-content ol{font-size:13px;color:#3f4254}
+.highlight{background:#eef6ff;border:1px solid #b6d4fe;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px}
+.highlight-success{background:#e8faf0;border:1px solid #a7e3c4;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px}
+.highlight-warn{background:#fff8e6;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px}
+.btn{display:inline-block;padding:9px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all 0.15s;margin:4px}
+.btn-primary{background:#3699ff;color:#fff}
+.btn-primary:hover{background:#187de4}
+.btn-success{background:#1bc5bd;color:#fff}
+.btn-outline{background:transparent;border:1px solid #dde0e8;color:#3f4254}
+.btn-outline:hover{background:#f5f6fa}
+.paste-area{width:100%;min-height:80px;padding:10px 14px;border:2px dashed #cbd5e1;border-radius:8px;font-family:monospace;font-size:12px;margin:10px 0;resize:vertical}
+.paste-area:focus{border-color:#3699ff;outline:none}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px}
+.tag-green{background:#c9f7f5;color:#1bc5bd}
+.tag-red{background:#ffe2e5;color:#f64e60}
+.tag-blue{background:#e1f0ff;color:#3699ff}
+.footer{text-align:center;color:#94a3b8;font-size:13px;margin-top:40px}
+.devui-mock{background:#1e293b;color:#e2e8f0;border-radius:6px;padding:14px;margin:10px 0;font-family:monospace;font-size:12px;line-height:1.5}
+.devui-mock .tabbar{display:flex;gap:2px;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.devui-mock .tab{padding:3px 10px;border-radius:3px;font-size:11px}
+.devui-mock .tab.active{background:#334155;color:#fff}
+.devui-mock .tree{color:#94a3b8}
+.devui-mock .tree .arrow{color:#fbbf24;margin-right:4px}
+.devui-mock .tree .hl{color:#93c5fd;background:#1e3a5f;padding:2px 6px;border-radius:3px;display:inline-block}
+.devui-mock .cookietable{display:grid;grid-template-columns:120px 1fr 60px 60px;gap:2px;margin-top:8px}
+.devui-mock .cookietable .hdr{color:#94a3b8;padding:4px 6px;font-weight:bold;font-size:10px}
+.devui-mock .cookietable .cell{padding:4px 6px;border-bottom:1px solid #334155;font-size:11px}
+.devui-mock .cookietable .cell .httponly{color:#fbbf24;font-size:9px}
+.result-box{display:none;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🍠 小红书 Cookie 获取指南</h1>
+  <p class="subtitle">用 Edge 开发者工具导出完整的 Cookie（包括 HttpOnly 隐式Cookie）</p>
+
+  <div class="card">
+    <h2>🔢 跟着下面几步走</h2>
+
+    <div class="step-box">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <strong>打开小红书并登录</strong>
+        <p>在 Edge 浏览器中打开 <strong>xiaohongshu.com</strong> 并确保已登录你的账号</p>
+        <button class="btn btn-primary" onclick="window.open('https://www.xiaohongshu.com/login')">打开小红书登录页</button>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <strong>按 F12 打开开发者工具</strong>
+        <p>在已登录的小红书页面上，按键盘的 <strong>F12</strong> 键</p>
+        <div class="highlight">Mac 用户按 <strong>Fn+F12</strong> 或 <strong>Command+Option+I</strong></div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <strong>点「应用程序」(Application) 标签</strong>
+        <div class="devui-mock">
+          <div class="tabbar">
+            <span class="tab">元素 (Elements)</span>
+            <span class="tab">控制台 (Console)</span>
+            <span class="tab active">应用程序 (Application)</span>
+            <span class="tab">网络 (Network)</span>
+          </div>
+          <div class="tree">
+            ▶ Frames<br>
+            &nbsp;&nbsp;<span class="tree">STORAGE</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">▼</span> Cookie<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl">▶ https://www.xiaohongshu.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <strong>找到 Cookie 表格并导出</strong>
+        <p>点击左侧的 <strong>Cookies → https://www.xiaohongshu.com</strong>，右侧会显示Cookie表格</p>
+        <div class="highlight-warn">
+          <strong>关键操作：</strong>在 Cookie 表格里，<strong>随便点一个 Cookie 行</strong>，然后按 <strong>Ctrl+A</strong>（全选所有行），
+          再按 <strong>Ctrl+C</strong>（复制）。<br>
+          <span style="font-size:12px">💡 或者选中后右键 → 复制</span>
+        </div>
+        <div class="devui-mock">
+          <div class="cookietable">
+            <div class="hdr">名称 (Name)</div><div class="hdr">值 (Value)</div><div class="hdr">域名</div><div class="hdr">HttpOnly</div>
+            <div class="cell">a1</div><div class="cell">1871a7a6d...</div><div class="cell">.xiaohongshu.com</div><div class="cell">否</div>
+            <div class="cell">web_session</div><div class="cell" style="color:#fbbf24">030037a4...</div><div class="cell">.xiaohongshu.com</div><div class="cell"><span class="httponly">✅ 是</span></div>
+            <div class="cell">webId</div><div class="cell">f695a1da...</div><div class="cell">.xiaohongshu.com</div><div class="cell">否</div>
+            <div class="cell">x-user-id</div><div class="cell">669c4ab4...</div><div class="cell">.xiaohongshu.com</div><div class="cell">否</div>
+          </div>
+        </div>
+        <div class="highlight">
+          ✅ <strong>看到 web_session 了吗？</strong> 它的 HttpOnly 标记是"是"——这就是之前获取不到的原因！
+          这种 Cookie JavaScript 无法读取，只能从开发者工具这里复制。
+        </div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <strong>粘贴回这里</strong>
+        <p>把刚刚复制的内容（<strong>Ctrl+C</strong> 复制的整张 Cookie 表格）粘贴到下面的输入框：</p>
+        <textarea class="paste-area" id="raw-paste" placeholder="按 Ctrl+V 粘贴你从开发者工具复制的 Cookie 数据...&#10;&#10;不用管是什么格式，系统会自动解析。"></textarea>
+        <div style="margin-top:8px">
+          <button class="btn btn-success" onclick="submitRawCookies()">📋 解析并提交 Cookie</button>
+        </div>
+        <div id="submit-result" class="result-box"></div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <strong>回到管理系统完成添加</strong>
+        <p>点击下方按钮回到管理系统 → 账号管理 → 添加账号 → 小红书</p>
+        <a href="/" class="btn btn-primary">← 返回管理系统</a>
+        <button class="btn btn-outline" onclick="checkAndFill()">检查是否已捕获</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#fff8e6;border-color:#ffe082">
+    <h2>💡 为什么之前的"一键获取"不好用</h2>
+    <p>小红书把登录会话的 Cookie（<strong>web_session</strong>）设置成了 <strong>HttpOnly</strong> 模式。</p>
+    <p style="margin-top:6px">这是浏览器的安全机制——标记为 HttpOnly 的 Cookie，网页里的 JavaScript 代码（包括书签栏小工具）<strong>完全读取不到</strong>。</p>
+    <p style="margin-top:6px">但开发者工具（F12 → Application → Cookies）<strong>可以完整显示所有 Cookie</strong>，包括 HttpOnly 的。所以用开发者工具复制是最可靠的方法。</p>
+  </div>
+
+  <div class="footer">Social Media Manager · Cookie 获取指南</div>
+</div>
+
+<script>
+function submitRawCookies() {
+  const raw = document.getElementById('raw-paste').value;
+  if (!raw.trim()) {
+    alert('请先在输入框中粘贴 Cookie 数据');
+    return;
+  }
+
+  const resultDiv = document.getElementById('submit-result');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<p style="color:#7e8299">⏳ 正在解析...</p>';
+
+  fetch('/api/auth/capture-raw-cookies', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({platform:'xiaohongshu', cookies_raw: raw, user_id: ''})
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const hasSession = d.has_session ? '✅ 包含 web_session（登录就绪）' : '⚠️ 未检测到 web_session，请确认已登录';
+      resultDiv.innerHTML = `<div class="highlight-success">
+        <strong>✅ 解析成功！捕获了 ${d.cookie_count} 个 Cookie</strong><br>
+        <span style="font-size:13px">${hasSession}</span><br><br>
+        <a href="/" class="btn btn-primary">← 回管理系统添加账号</a>
+        <button class="btn btn-outline" onclick="checkAndFill()">自动填入</button>
+      </div>`;
+    } else {
+      resultDiv.innerHTML = `<div class="highlight-warn">
+        <strong>❌ 解析失败</strong><br>
+        <span style="font-size:13px">${d.detail || '无法识别粘贴的内容，请确认已按步骤复制了 Cookie 数据'}</span>
+      </div>`;
+    }
+  })
+  .catch(e => {
+    resultDiv.innerHTML = `<div class="highlight-warn">❌ 出错: ${e.message}</div>`;
+  });
+}
+
+function checkAndFill() {
+  fetch('/api/auth/captured/xiaohongshu')
+    .then(r => r.json())
+    .then(d => {
+      if (d.success && d.capture) {
+        alert('✅ Cookie 已就绪！现在回到管理系统，打开"添加账号"页面，点击"自动填入"按钮即可');
+        window.location.href = '/';
+      } else {
+        alert('⏳ 暂未检测到 Cookie，请先在输入框中粘贴并提交');
+      }
+    })
+    .catch(() => {
+      alert('❌ 检查失败');
+    });
+}
+</script>
+</body>
+</html>
